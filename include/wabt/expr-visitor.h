@@ -68,11 +68,17 @@ class ExprVisitor::Delegate {
  public:
   virtual ~Delegate() {}
 
+  virtual Result OnUnaryExpr(UnaryExpr*) = 0;
   virtual Result OnBinaryExpr(BinaryExpr*) = 0;
+  virtual Result OnTernaryExpr(TernaryExpr*) = 0;
+  virtual Result OnQuaternaryExpr(QuaternaryExpr*) = 0;
+
   virtual Result BeginBlockExpr(BlockExpr*) = 0;
   virtual Result EndBlockExpr(BlockExpr*) = 0;
   virtual Result OnBrExpr(BrExpr*) = 0;
   virtual Result OnBrIfExpr(BrIfExpr*) = 0;
+  virtual Result OnBrOnNonNullExpr(BrOnNonNullExpr*) = 0;
+  virtual Result OnBrOnNullExpr(BrOnNullExpr*) = 0;
   virtual Result OnBrTableExpr(BrTableExpr*) = 0;
   virtual Result BeginTryTableExpr(TryTableExpr*) = 0;
   virtual Result EndTryTableExpr(TryTableExpr*) = 0;
@@ -109,6 +115,7 @@ class ExprVisitor::Delegate {
   virtual Result OnTableGrowExpr(TableGrowExpr*) = 0;
   virtual Result OnTableSizeExpr(TableSizeExpr*) = 0;
   virtual Result OnTableFillExpr(TableFillExpr*) = 0;
+  virtual Result OnRefAsNonNullExpr(RefAsNonNullExpr*) = 0;
   virtual Result OnRefFuncExpr(RefFuncExpr*) = 0;
   virtual Result OnRefNullExpr(RefNullExpr*) = 0;
   virtual Result OnRefIsNullExpr(RefIsNullExpr*) = 0;
@@ -116,9 +123,9 @@ class ExprVisitor::Delegate {
   virtual Result OnReturnExpr(ReturnExpr*) = 0;
   virtual Result OnReturnCallExpr(ReturnCallExpr*) = 0;
   virtual Result OnReturnCallIndirectExpr(ReturnCallIndirectExpr*) = 0;
+  virtual Result OnReturnCallRefExpr(ReturnCallRefExpr*) = 0;
   virtual Result OnSelectExpr(SelectExpr*) = 0;
   virtual Result OnStoreExpr(StoreExpr*) = 0;
-  virtual Result OnUnaryExpr(UnaryExpr*) = 0;
   virtual Result OnUnreachableExpr(UnreachableExpr*) = 0;
   virtual Result BeginTryExpr(TryExpr*) = 0;
   virtual Result OnCatchExpr(TryExpr*, Catch*) = 0;
@@ -134,7 +141,6 @@ class ExprVisitor::Delegate {
   virtual Result OnAtomicStoreExpr(AtomicStoreExpr*) = 0;
   virtual Result OnAtomicRmwExpr(AtomicRmwExpr*) = 0;
   virtual Result OnAtomicRmwCmpxchgExpr(AtomicRmwCmpxchgExpr*) = 0;
-  virtual Result OnTernaryExpr(TernaryExpr*) = 0;
   virtual Result OnSimdLaneOpExpr(SimdLaneOpExpr*) = 0;
   virtual Result OnSimdLoadLaneExpr(SimdLoadLaneExpr*) = 0;
   virtual Result OnSimdStoreLaneExpr(SimdStoreLaneExpr*) = 0;
@@ -145,11 +151,17 @@ class ExprVisitor::Delegate {
 
 class ExprVisitor::DelegateNop : public ExprVisitor::Delegate {
  public:
+  Result OnUnaryExpr(UnaryExpr*) override { return Result::Ok; }
   Result OnBinaryExpr(BinaryExpr*) override { return Result::Ok; }
+  Result OnTernaryExpr(TernaryExpr*) override { return Result::Ok; }
+  Result OnQuaternaryExpr(QuaternaryExpr*) override { return Result::Ok; }
+
   Result BeginBlockExpr(BlockExpr*) override { return Result::Ok; }
   Result EndBlockExpr(BlockExpr*) override { return Result::Ok; }
   Result OnBrExpr(BrExpr*) override { return Result::Ok; }
   Result OnBrIfExpr(BrIfExpr*) override { return Result::Ok; }
+  Result OnBrOnNonNullExpr(BrOnNonNullExpr*) override { return Result::Ok; };
+  Result OnBrOnNullExpr(BrOnNullExpr*) override { return Result::Ok; };
   Result OnBrTableExpr(BrTableExpr*) override { return Result::Ok; }
   Result BeginTryTableExpr(TryTableExpr*) override { return Result::Ok; }
   Result EndTryTableExpr(TryTableExpr*) override { return Result::Ok; }
@@ -186,6 +198,7 @@ class ExprVisitor::DelegateNop : public ExprVisitor::Delegate {
   Result OnTableGrowExpr(TableGrowExpr*) override { return Result::Ok; }
   Result OnTableSizeExpr(TableSizeExpr*) override { return Result::Ok; }
   Result OnTableFillExpr(TableFillExpr*) override { return Result::Ok; }
+  Result OnRefAsNonNullExpr(RefAsNonNullExpr*) override { return Result::Ok; }
   Result OnRefFuncExpr(RefFuncExpr*) override { return Result::Ok; }
   Result OnRefNullExpr(RefNullExpr*) override { return Result::Ok; }
   Result OnRefIsNullExpr(RefIsNullExpr*) override { return Result::Ok; }
@@ -195,9 +208,9 @@ class ExprVisitor::DelegateNop : public ExprVisitor::Delegate {
   Result OnReturnCallIndirectExpr(ReturnCallIndirectExpr*) override {
     return Result::Ok;
   }
+  Result OnReturnCallRefExpr(ReturnCallRefExpr*) override { return Result::Ok; }
   Result OnSelectExpr(SelectExpr*) override { return Result::Ok; }
   Result OnStoreExpr(StoreExpr*) override { return Result::Ok; }
-  Result OnUnaryExpr(UnaryExpr*) override { return Result::Ok; }
   Result OnUnreachableExpr(UnreachableExpr*) override { return Result::Ok; }
   Result BeginTryExpr(TryExpr*) override { return Result::Ok; }
   Result OnCatchExpr(TryExpr*, Catch*) override { return Result::Ok; }
@@ -215,7 +228,6 @@ class ExprVisitor::DelegateNop : public ExprVisitor::Delegate {
   Result OnAtomicRmwCmpxchgExpr(AtomicRmwCmpxchgExpr*) override {
     return Result::Ok;
   }
-  Result OnTernaryExpr(TernaryExpr*) override { return Result::Ok; }
   Result OnSimdLaneOpExpr(SimdLaneOpExpr*) override { return Result::Ok; }
   Result OnSimdLoadLaneExpr(SimdLoadLaneExpr*) override { return Result::Ok; }
   Result OnSimdStoreLaneExpr(SimdStoreLaneExpr*) override { return Result::Ok; }

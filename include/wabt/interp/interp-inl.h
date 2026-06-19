@@ -42,7 +42,7 @@ inline bool FuncType::classof(const ExternType* type) {
 }
 
 inline FuncType::FuncType(ValueTypes params, ValueTypes results)
-    : ExternType(ExternKind::Func), params(params), results(results) {}
+    : ExternType(ExternKind::Func), params(params), results(results), func_types(nullptr) {}
 
 //// TableType ////
 // static
@@ -273,6 +273,8 @@ RefPtr<T>::RefPtr(const RefPtr& other)
 
 template <typename T>
 RefPtr<T>& RefPtr<T>::operator=(const RefPtr& other) {
+  if (this == &other) return *this;
+  reset();
   obj_ = other.obj_;
   store_ = other.store_;
   root_index_ = store_ ? store_->CopyRoot(other.root_index_) : 0;
@@ -289,6 +291,8 @@ RefPtr<T>::RefPtr(RefPtr&& other)
 
 template <typename T>
 RefPtr<T>& RefPtr<T>::operator=(RefPtr&& other) {
+  if (this == &other) return *this;
+  reset();
   obj_ = other.obj_;
   store_ = other.store_;
   root_index_ = other.root_index_;
@@ -313,6 +317,8 @@ RefPtr<T>::RefPtr(const RefPtr<U>& other)
 template <typename T>
 template <typename U>
 RefPtr<T>& RefPtr<T>::operator=(const RefPtr<U>& other) {
+  assert(static_cast<const void*>(this) != static_cast<const void*>(&other));
+  reset();
   obj_ = other.obj_;
   store_ = other.store_;
   root_index_ = store_ ? store_->CopyRoot(other.root_index_) : 0;
@@ -331,6 +337,8 @@ RefPtr<T>::RefPtr(RefPtr&& other)
 template <typename T>
 template <typename U>
 RefPtr<T>& RefPtr<T>::operator=(RefPtr&& other) {
+  assert(static_cast<const void*>(this) != static_cast<const void*>(&other));
+  reset();
   obj_ = other.obj_;
   store_ = other.store_;
   root_index_ = other.root_index_;
@@ -420,12 +428,6 @@ template <> inline bool HasType<Ref>(ValueType type) { return IsReference(type);
 template <typename T>
 void RequireType(ValueType type) {
   assert(HasType<T>(type));
-}
-
-inline bool TypesMatch(ValueType expected, ValueType actual) {
-  // Currently there is no subtyping, so expected and actual must match
-  // exactly. In the future this may be expanded.
-  return expected == actual;
 }
 
 //// Value ////
@@ -682,8 +684,8 @@ inline bool Table::classof(const Object* obj) {
 }
 
 // static
-inline Table::Ptr Table::New(Store& store, TableType type) {
-  return store.Alloc<Table>(store, type);
+inline Table::Ptr Table::New(Store& store, TableType type, Ref init_ref) {
+  return store.Alloc<Table>(store, type, init_ref);
 }
 
 inline const ExternType& Table::extern_type() {
